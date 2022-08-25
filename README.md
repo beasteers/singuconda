@@ -9,6 +9,7 @@ Here's the official NYU Greene documentation: https://sites.google.com/nyu.edu/n
 ssh greene  # or whatever your environment is
 
 curl https://github.com/beasteers/singuconda/raw/main/singuconda --output ~/singuconda
+chmod +x ~/singuconda
 ```
 
 ## Tutorial
