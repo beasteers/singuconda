@@ -3,6 +3,9 @@ Tool for setting up singularity overlays with miniconda
 
 Here's the official NYU Greene documentation: https://sites.google.com/nyu.edu/nyu-hpc/hpc-systems/greene/software/singularity-with-miniconda
 
+[singuconda.webm](https://user-images.githubusercontent.com/6741720/186782952-9a3b4a2c-5487-46a8-af21-786ba93fb6ed.webm)
+
+
 ## Install
 
 ```bash
@@ -13,6 +16,7 @@ chmod +x ~/singuconda
 ```
 
 ## Tutorial
+
 
 ```bash
 # cd to your projects directory
