@@ -30,9 +30,26 @@ The script will create some helper scripts for you:
  - `./sing` run the singularity container in read-only mode - use this to run many containers at once
  - `./singrw` run the singularity container in read-write mode - use this to install packages
  
- And to run with GPU enabled, do:
+By default it will detect GPUs. But if that fails, you can do:
   - `./sing --nv`
   - `./singrw --nv`
+
+
+Those commands above will create interactive sessions. If you want to run a script/commands in singularity, you can do this:
+
+```bash
+echo 'python  script.py' | ./sing
+
+./sing <<< 'python  script.py'
+
+./sing <<EOF
+python script.py
+EOF
+
+./sing <<EOF
+which python
+EOF
+```
 
 ### Explanation
 
