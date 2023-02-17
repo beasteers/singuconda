@@ -23,7 +23,29 @@ const SING_CMD_BLOCK = `singularity exec %s --overlay %s %s /bin/bash << 'EOFXXX
 %s
 EOFXXX`
 
-const SING_CMD_INTERACTIVE = "singularity exec %s \\\n\t--overlay %s \\\n\t%s \\\n\t/bin/bash --init-file /ext3/env"
+const SING_CMD_INTERACTIVE = "singularity exec %s \\--overlay %s \\\n\t%s \\\n\t/bin/bash --init-file /ext3/env"
+
+const SING_CMD_FLEX_SCRIPT = `
+# allow commands from stdin
+readstdin() {
+	read -N1 -t0.5 __  && { (( $? <= 128 )) && { IFS= read -rd '' _stdin; echo "$__$_stdin"; } }
+}
+CMD="$(readstdin)"
+ARGS=()
+if [[ -z "$CMD" ]]; then
+	ARGS+=(--init-file /ext3/env)
+else
+	ARGS+=(-c ". /ext3/env;$CMD")
+fi
+
+# run singularity
+set -x
+singularity exec %s \
+	--overlay %s \
+	%s \
+	/bin/bash "${ARGS[@]}"
+
+`
 
 const AUTO_NV = `$([[ $(hostname -s) =~ ^g ]] && echo '--nv')`
 
@@ -396,17 +418,18 @@ func StartSing(overlay string, sif string) error {
 func WriteSingCmds(overlay string, sif string) error {
 	overlay, _ = filepath.Abs(overlay)
 
-	cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "$@", overlay+":ro", sif)
-	fmt.Printf("To enter the container, run: \033[32m./sing\033[0m \n\nwhich is equivalent to:\n%s\n", cmd)
-	err := os.WriteFile("sing", []byte(cmd), 0774)
+	cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "", overlay+":ro", sif)
+	fmt.Printf("To enter the container, run: \033[32m./sing\033[0m \n\nor you can run:\n%s\n", cmd)
+	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, "$@", overlay+":ro", sif)
+	err := os.WriteFile("sing", []byte(script), 0774)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("\nTo use GPUs do: \033[32m./sing --nv\033[0m\n")
-	cmd = fmt.Sprintf(SING_CMD_INTERACTIVE, "$@", overlay, sif)
+	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, "$@", overlay, sif)
 	fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./singrw\033[0m \n\n")
-	err = os.WriteFile("singrw", []byte(cmd), 0774)
+	err = os.WriteFile("singrw", []byte(script), 0774)
 	if err != nil {
 		return err
 	}
