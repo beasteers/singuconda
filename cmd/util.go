@@ -38,9 +38,14 @@ else
 	ARGS+=(-c ". /ext3/env;$CMD")
 fi
 
+GPUS=$(which nvidia-smi >&/dev/null && nvidia-smi --query-gpu=name --format=csv,noheader)
+NV=$([[ $(echo -n "$GPUS" | awk 'NF' | wc -l) -ge 1 ]] && echo '--nv')
+
+[[ ! -z "$NV" ]] && echo "Detected gpus, using --nv:" && echo $GPUS && echo
+
 # run singularity
 set -x
-singularity exec %s \
+singularity exec $NV %s \
 	--overlay %s \
 	%s \
 	/bin/bash "${ARGS[@]}"
