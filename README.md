@@ -49,3 +49,9 @@ Then you're all done!
 You can re-run it if you want to change anything (sif file, python version, installs).
 
 This was built for NYU Greene's environment, but it should apply elsewhere too!
+
+## Build
+
+```bash
+env GOOS=linux GOARCH=amd64 go build .
+```
