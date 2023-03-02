@@ -72,3 +72,24 @@ This was built for NYU Greene's environment, but it should apply elsewhere too!
 ```bash
 env GOOS=linux GOARCH=amd64 go build .
 ```
+
+## Example SBatch file
+So we have something to copy and paste from ;)
+```bash
+#!/bin/bash
+#SBATCH -c 8
+#SBATCH --mem 8GB
+#SBATCH --time 8:00:00
+#SBATCH --gres gpu:1
+#SBATCH --job-name=myjob
+#SBATCH --output logs/job.%J.out
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=<YOUR_USERID>@nyu.edu
+
+
+../sing << EOF
+
+python blah.py ...
+
+EOF
+```
