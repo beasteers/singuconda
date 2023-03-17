@@ -23,7 +23,12 @@ const SING_CMD_BLOCK = `singularity exec %s --overlay %s %s /bin/bash << 'EOFXXX
 %s
 EOFXXX`
 
-const SING_CMD_INTERACTIVE = "singularity exec %s \\--overlay %s \\\n\t%s \\\n\t/bin/bash --init-file /ext3/env"
+const SING_CMD_INTERACTIVE = `
+singularity exec %s \
+	--overlay %s \
+	%s \
+	/bin/bash --init-file /ext3/env
+`
 
 const SING_CMD_FLEX_SCRIPT = `
 # allow commands from stdin
@@ -38,10 +43,13 @@ else
 	ARGS+=(-c ". /ext3/env;$CMD")
 fi
 
-GPUS=$(which nvidia-smi >&/dev/null && nvidia-smi --query-gpu=name --format=csv,noheader)
+GPUS=$(type -p nvidia-smi >&/dev/null && nvidia-smi --query-gpu=name --format=csv,noheader)
 NV=$([[ $(echo -n "$GPUS" | awk 'NF' | wc -l) -ge 1 ]] && echo '--nv')
 
 [[ ! -z "$NV" ]] && echo "Detected gpus, using --nv:" && echo $GPUS && echo
+[[ ! -z "$NV" ]] || echo "No gpus detected. Use --nv for gpu bindings." && echo
+
+SCRIPT_DIR=$(dirname ${BASH_SOURCE:-$0})
 
 # run singularity
 set -x
@@ -52,7 +60,7 @@ singularity exec $NV %s \
 
 `
 
-const AUTO_NV = `$([[ $(hostname -s) =~ ^g ]] && echo '--nv')`
+// const AUTO_NV = `$([[ $(hostname -s) =~ ^g ]] && echo '--nv')`
 
 const SBATCH_ARG = `#SBATCH --%s=%s\n`
 
@@ -102,7 +110,7 @@ func GetOverlay() (string, string, error) {
 		if existingOverlay != "new..." {
 			overlayName := strings.TrimSuffix(path.Base(existingOverlay), ".gz")
 			overlayName = strings.TrimSuffix(path.Base(overlayName), filepath.Ext(overlayName))
-			existingOverlay, _ = filepath.Abs(existingOverlay)
+			// existingOverlay, _ = filepath.Abs(existingOverlay)
 			return existingOverlay, overlayName, nil
 		}
 	}
@@ -266,7 +274,7 @@ cat > /ext3/env << 'EOFENV'
 export PATH=/ext3/miniconda3/bin:$PATH
 source /ext3/miniconda3/etc/profile.d/conda.sh -y
 [[ -f /ext3/conda.activate ]] && source /ext3/conda.activate
-echo "hello :) you're using:" "$(which python)"
+echo "hello :) you're using:" "$(type -P python)"
 python --version 2>&1
 EOFENV
 chmod +x /ext3/env
@@ -278,7 +286,7 @@ chmod +x /ext3/env
 	err = SingCmd(overlay, sif, `
 	# show conda/python info
 	conda info --envs
-	which python
+	type -P python
 	echo "You're currently setup with:"
 	python --version
 	`)
@@ -421,18 +429,23 @@ func StartSing(overlay string, sif string) error {
 }
 
 func WriteSingCmds(overlay string, sif string) error {
-	overlay, _ = filepath.Abs(overlay)
+	// overlay, _ = filepath.Abs(overlay)
+	// cwd, _ := filepath.Abs(".")
+	// if strings.HasPrefix(overlay, cwd) {
+	// 	overlay, _ = filepath.Rel(cwd, overlay)
+	// }
+	relOverlay := "$SCRIPT_DIR/" + overlay
 
 	cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "", overlay+":ro", sif)
 	fmt.Printf("To enter the container, run: \033[32m./sing\033[0m \n\nor you can run:\n%s\n", cmd)
-	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, "$@", overlay+":ro", sif)
+	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, "$@", relOverlay+":ro", sif)
 	err := os.WriteFile("sing", []byte(script), 0774)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("\nTo use GPUs do: \033[32m./sing --nv\033[0m\n")
-	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, "$@", overlay, sif)
+	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, "$@", relOverlay, sif)
 	fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./singrw\033[0m \n\n")
 	err = os.WriteFile("singrw", []byte(script), 0774)
 	if err != nil {

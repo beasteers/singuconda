@@ -51,6 +51,27 @@ which python
 EOF
 ```
 
+#### .gitignore
+
+If you do this while you're inside a git repository, you may want to ignore the generated files. 
+
+Here's a list of rules to filter them.
+```
+# the overlay file
+*.ext3
+
+# singuconda: start scripts
+sing
+singrw
+
+# singuconda: named start scripts (for when you have multiple overlays in one directory)
+sing-*
+singrw-*
+
+# the singularity container associated with the overlay
+.*.sifpath
+```
+
 ### Explanation
 
 It will go through a series of prompts. What happens:

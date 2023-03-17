@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -68,7 +67,7 @@ This was built for NYU Greene's environment, but it should apply elsewhere too!`
 		// provide quick actions to get started
 		err = StartSing(overlay, sif)
 		fmt.Printf("\nHappy training! :)\n")
-		fmt.Printf("\nQuick commands: \033[32m./sing\033[0m    \033[32m./sing --nv\033[0m    \033[32m./singrw\033[0m \n")
+		fmt.Printf("\nQuick commands: \033[32m./sing\033[0m (read-only)    \033[32m./singrw\033[0m (read-write) \n")
 		if err != nil {
 			fmt.Println(err)
 			return
