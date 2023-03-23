@@ -11,7 +11,7 @@ Here's the official NYU Greene documentation: https://sites.google.com/nyu.edu/n
 ```bash
 ssh greene  # or whatever your environment is
 
-curl https://github.com/beasteers/singuconda/raw/main/singuconda --output ~/singuconda
+curl -L https://github.com/beasteers/singuconda/raw/main/singuconda --output ~/singuconda
 chmod +x ~/singuconda
 ```
 
