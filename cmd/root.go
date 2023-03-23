@@ -49,8 +49,15 @@ This was built for NYU Greene's environment, but it should apply elsewhere too!`
 			return
 		}
 
+		// create shortcut scripts
+		err = WriteSingCmds(name) // , overlay, sif
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		// download and install miniconda (if not done already)
-		err = InstallConda(overlay, sif)
+		err = InstallConda()
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -58,14 +65,10 @@ This was built for NYU Greene's environment, but it should apply elsewhere too!`
 
 		// we're all good! write out shortcuts
 		fmt.Printf("\nGreat you're all set!\n\n")
-		err = WriteSingCmds(overlay, sif)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		HowToRun(overlay, sif)
 
 		// provide quick actions to get started
-		err = StartSing(overlay, sif)
+		err = StartSing() // overlay, sif
 		fmt.Printf("\nHappy training! :)\n")
 		fmt.Printf("\nQuick commands: \033[32m./sing\033[0m (read-only)    \033[32m./singrw\033[0m (read-write) \n")
 		if err != nil {
