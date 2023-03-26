@@ -27,17 +27,29 @@ singularity exec %s \
 `
 
 const SING_CMD_FLEX_SCRIPT = `
-# allow commands from stdin
+
+# build bash command arguments
+
+# allow commands from stdin (e.g. ./sing <<< "echo hi")
 readstdin() {
 	read -N1 -t0.5 __  && { (( $? <= 128 )) && { IFS= read -rd '' _stdin; echo "$__$_stdin"; } }
 }
+
+# build args
 CMD="$(readstdin)"
 ARGS=()
 if [[ -z "$CMD" ]]; then
-	ARGS+=(--init-file /ext3/env)
+	if [[ -z "$SINGUCONDA_NO_INIT_ENV" ]]; then
+		ARGS+=(--init-file /ext3/env)
+	fi
 else
-	ARGS+=(-c ". /ext3/env;$CMD")
+	if [[ -z "$SINGUCONDA_NO_INIT_ENV" ]]; then
+		CMD="[[ -e /ext3/env ]] && . /ext3/env;$CMD"
+	fi
+	ARGS+=(-c "$CMD")
 fi
+
+# build singularity arguments
 
 # check for GPUs
 GPUS=$(type -p nvidia-smi >&/dev/null && nvidia-smi --query-gpu=name --format=csv,noheader)
@@ -49,21 +61,21 @@ if [[ -z "$QUIET_SING" ]]; then
 fi
 
 # get singularity arguments
-SCRIPT_DIR=$(dirname ${BASH_SOURCE:-$0})
-SING_NAME=${SING_NAME:-%s}
-SIF=$(cat $SCRIPT_DIR/.$SING_NAME.sifpath)
+SCRIPT_DIR="$(dirname ${BASH_SOURCE:-$0})"
+SING_NAME="${SING_NAME:-%s}"
+
+OVERLAY="$SCRIPT_DIR/$SING_NAME.ext3"
+SIF="$(cat $SCRIPT_DIR/.$SING_NAME.sifpath)"
 
 # run singularity
 
-singularity exec $NV %s \
-	--overlay "$SCRIPT_DIR/$SING_NAME.ext3%s" \
-	"$SIF" \
-	/bin/bash "${ARGS[@]}"
+singularity exec $NV %s --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
 
 `
 
 const SINGRW_BLOCK = `
-QUIET_SING=1 ./singrw << 'EOFXXX'
+SINGUCONDA_NO_INIT_ENV=1 QUIET_SING=1 ./singrw << 'EOFXXX'
+[[ -e /ext3/env ]] && . /ext3/env > /dev/null
 %s
 EOFXXX
 `

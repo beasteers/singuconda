@@ -5,7 +5,6 @@ import (
 )
 
 func InstallConda() error {
-
 	err := SingCmd(`
 # download miniconda
 CONDAURL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
@@ -52,11 +51,11 @@ chmod +x /ext3/env
 	}
 
 	err = SingCmd(`
-	# show conda/python info
-	conda info --envs
-	type -P python
-	echo "You're currently setup with:"
-	python --version
+# show conda/python info
+conda info --envs
+type -P python
+echo "You're currently setup with:"
+python --version
 	`)
 	if err != nil {
 		return err
@@ -71,41 +70,41 @@ chmod +x /ext3/env
 		return err
 	}
 	err = SingCmd(`
-	PYVER="` + pythonVersion + `"
+PYVER="` + pythonVersion + `"
 
-	# python version special cases
+# python version special cases
 
-	if [[ -z "$PYVER" ]]; then
-		echo "keeping environment..."
-		exit 0
+if [[ -z "$PYVER" ]]; then
+	echo "keeping environment..."
+	exit 0
+fi
+
+if [[ "$PYVER" == "-" ]]; then
+	echo "resetting to the base environment..."
+	echo "" > /ext3/conda.activate
+	exit 0
+fi
+
+# install the environment if it doesnt already exist
+
+if [[ -d /ext3/miniconda3/envs/$PYVER ]]; then
+	CONDAENV=$PYVER
+	echo "using environment: $CONDAENV"
+else
+	CONDAENV="py${PYVER//[^0-9]/}"
+	echo "using environment: $CONDAENV"
+	if [[ ! -d /ext3/miniconda3/envs/$CONDAENV ]]; then
+		echo "creating environment: $CONDAENV"
+		export PATH=/ext3/miniconda3/bin:$PATH
+		conda create -n "$CONDAENV" python="$PYVER"
 	fi
+fi
 
-	if [[ "$PYVER" == "-" ]]; then
-		echo "resetting to the base environment..."
-		echo "" > /ext3/conda.activate
-		exit 0
-	fi
+# add script to activate this environment
 
-	# install the environment if it doesnt already exist
-
-	if [[ -d /ext3/miniconda3/envs/$PYVER ]]; then
-		CONDAENV=$PYVER
-		echo "using environment: $CONDAENV"
-	else
-		CONDAENV="py${PYVER//[^0-9]/}"
-		echo "using environment: $CONDAENV"
-		if [[ ! -d /ext3/miniconda3/envs/$CONDAENV ]]; then
-			echo "creating environment: $CONDAENV"
-			export PATH=/ext3/miniconda3/bin:$PATH
-			conda create -n "$CONDAENV" python="$PYVER"
-		fi
-	fi
-
-	# add script to activate this environment
-
-	if [[ ! -z "$CONDAENV" ]]; then
-		echo "conda activate $CONDAENV" > /ext3/conda.activate
-	fi
+if [[ ! -z "$CONDAENV" ]]; then
+	echo "conda activate $CONDAENV" > /ext3/conda.activate
+fi
 	`)
 	if err != nil {
 		return err
