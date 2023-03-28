@@ -45,10 +45,11 @@ echo 'python  script.py' | ./sing
 python script.py
 EOF
 
-./sing <<EOF
-which python
-EOF
+./sing <<< "
+python script.py
+"
 ```
+
 Any arguments you provide will be passed to the singularity command.
 
 #### .gitignore
