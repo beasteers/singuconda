@@ -1,9 +1,28 @@
-# singuconda
-Tool for setting up singularity overlays with miniconda
+# singuconda 🌈
+Tool for setting up singularity overlays with miniconda - [official NYU Greene docs](https://sites.google.com/nyu.edu/nyu-hpc/hpc-systems/greene/software/singularity-with-miniconda)
 
-Here's the official NYU Greene documentation: https://sites.google.com/nyu.edu/nyu-hpc/hpc-systems/greene/software/singularity-with-miniconda
+...because nobody likes doing it
+
+---
+✨ Here's what you could look like ✨
 
 [singuconda.webm](https://user-images.githubusercontent.com/6741720/186782952-9a3b4a2c-5487-46a8-af21-786ba93fb6ed.webm)
+
+---
+
+Running singuconda will give you a magic little `./sing` 🧚🏾‍♀️ command in your current directory that:
+ - autodetects GPUs and will automagically add the `--nv` flag
+ - remembers the path to your overlay and sif images so all you have to do is `./sing`
+ - It automatically sources your `env` file for you (the one from the tutorial)
+ - also creates a `singrw` script that mounts the overlay in read-write mode (`./sing` mounts with read-only so you can have multiple scripts using it)
+ - Has full support for both interactive shells (`./sing`) and scripts (`./sing <<< "type -P python"`) which will run the command and exit. This is what's used in sbatch files!
+ - It accepts additional arguments so you can do `./sing -o /scratch/work/public/ml-datasets/coco/coco-2017.sqf:ro` to mount additional overlays (for example)
+
+
+The `~/singuconda` script itself:
+ - has autocomplete for all of the overlays and sif files
+ - automatically installs miniconda and lets you optionally pick a python version
+
 
 
 ## Install
@@ -16,7 +35,9 @@ chmod +x ~/singuconda
 ```
 
 ## Tutorial
+The singuconda command should always be run from the directory where you want your overlay and sing script to live.
 
+But once they're created, the `sing` script can be run from anywhere.
 
 ```bash
 # cd to your projects directory
@@ -66,6 +87,7 @@ sing
 singrw
 
 # singuconda: named start scripts (for when you have multiple overlays in one directory)
+# These are no longer generated in the current version of the script
 sing-*
 singrw-*
 
@@ -73,15 +95,65 @@ singrw-*
 .*.sifpath
 ```
 
-#### Uninstall
+### FAQ
+
+##### I want to have two overlays in the same directory! How does `./sing` know which one to point to?
+
+singuconda does allow creating multiple overlays in the same directory. 
+When you use singuconda to setup a second overlay in the same directory, 
+it will overwrite the sing command to point to your newer overlay. 
+
+If you want to use your first overlay, you can override the overlay using `SING_NAME=my-first-sing ./sing`
+(assuming your overlay is called `my-first-sing.ext3`). 
+
+##### I renamed my overlay and now it's broken!!
+
+Yep that's gonna happen if you do that! But don't fret.
+
+You need to rename the hidden file that contains what SIF file you want to use.
+```bash
+OLD_SING_NAME=my-first-sing
+NEW_SING_NAME=better-name
+
+mv ".${OLD_SING_NAME}.sifpath" ".${NEW_SING_NAME}.sifpath"
+```
+And then you're going to want to edit `./sing` and `./singrw` to point to your new overlay name.
+
+change
+```bash
+SING_NAME="${SING_NAME:-my-first-sing}"
+```
+to
+```bash
+SING_NAME="${SING_NAME:-better-name}"
+```
+
+##### I want to change my SIF file!
+
+Just run `~/singuconda` again! It'll ask you if you want to configure an existing one or create a new one.
+
+##### I need to choose a different overlay file (I didn't pick enough space)
+
+Well that's a bummer! But I've done that too. Unfortunately, there's not a super convenient way, 
+but fortunately it's very easy to just start over! (which is what I always do).
+
+If you need to, I suppose you could try creating a new overlay, then mount both overlays and try to 
+copy between them, but I'm not sure how to mount the second overlay
+to a different directory (because afaik right now they'd both mount to `/ext3`). 
+
+```
+./singrw -o my-too-small-overlay.ext3  # uh oh! collision? I should test this lol
+```
+
+## Uninstall
 
 and if you want to remove the files, just do:
 
 ```bash
-rm *.ext3 sing singrw sing-* singrw-* .*.sifpath
+rm *.ext3 sing singrw .*.sifpath
 ```
 
-### Explanation
+## Explanation
 
 It will go through a series of prompts. What happens:
 1. pick an overlay file
@@ -122,4 +194,23 @@ So we have something to copy and paste from ;)
 python blah.py ...
 
 EOF
+```
+
+## Extra Greene Helpers
+Put your things in your home directory
+```bash
+ln -s /scratch/$USER ~/scratch
+ln -s /vast/$USER ~/vast
+ln -s /archive/$USER ~/archive
+```
+
+For your `~/.bashrc`:
+```bash
+# convenience commands for watching squeue
+export SQUEUEFMT='%.18i %.9P %.32j %.8u %.8T %.10M %.9l %.6D %R'
+alias msq='squeue  --me -o "$SQUEUEFMT"'
+alias wsq='watch -n 2 "squeue --me -o \"$SQUEUEFMT\""'
+
+# lets me know when my bashrc is sourced
+[[ $- == *i* ]] && echo 'hi bea :)'
 ```
