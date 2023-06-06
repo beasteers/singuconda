@@ -146,7 +146,7 @@ func StartSing() error { // overlay string, sif string
 		// 		return err
 		// 	}
 		// }
-		if cmd == "enter (write)" {
+		if cmd == "enter (read-write)" {
 			err = RunShell("./singrw")
 			if err != nil {
 				return err
