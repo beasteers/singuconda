@@ -215,13 +215,15 @@ echo "To access:"
 echo "ssh -L $port:localhost:$port $USER@greene.hpc.nyu.edu"
 echo "ssh -L $port:localhost:$port greene"
 
-../singrw << EOF
+./singrw << EOF
 
 python -m ipykernel install --name sing --user
 jupyter lab --no-browser --port $port
 
 EOF
 ```
+
+> Remember that you have to open a new ssh session and forward the port. Check `logs/jupyter.out` for the port number.
 
 ## Extra Greene Helpers
 Put your things in your home directory
