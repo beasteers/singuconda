@@ -53,7 +53,7 @@ fi
 
 # check for GPUs
 GPUS=$(type -p nvidia-smi >&/dev/null && nvidia-smi --query-gpu=name --format=csv,noheader)
-NV=$([[ $(echo -n "$GPUS" | awk 'NF' | wc -l) -ge 1 ]] && echo '--nv')
+NV=$([[ $(echo -n "$GPUS" | grep -v "No devices were found" | awk 'NF' | wc -l) -ge 1 ]] && echo '--nv')
 # report GPUs
 if [[ -z "$QUIET_SING" ]]; then
 	[[ ! -z "$NV" ]] && echo "Detected gpus, using --nv:" && echo $GPUS && echo

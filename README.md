@@ -239,6 +239,7 @@ For your `~/.bashrc`:
 export SQUEUEFMT='%.18i %.9P %.32j %.8u %.8T %.10M %.9l %.6D %R'
 alias msq='squeue  --me -o "$SQUEUEFMT"'
 alias wsq='watch -n 2 "squeue --me -o \"$SQUEUEFMT\""'
+alias wnv='watch -n 0.1 nvidia-smi'
 
 # lets me know when my bashrc is sourced
 [[ $- == *i* ]] && echo 'hi bea :)'
