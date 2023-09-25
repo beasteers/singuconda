@@ -86,11 +86,6 @@ Here's a list of rules to filter them.
 sing
 singrw
 
-# singuconda: named start scripts (for when you have multiple overlays in one directory)
-# These are no longer generated in the current version of the script
-sing-*
-singrw-*
-
 # the singularity container associated with the overlay
 .*.sifpath
 ```
