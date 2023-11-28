@@ -4,8 +4,8 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-func InstallConda() error {
-	err := SingCmd(`
+func InstallConda(singName string) error {
+	err := SingCmd(singName, `
 # download miniconda
 CONDAURL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 CONDASH="Miniconda3-latest-Linux-x86_64.sh"
@@ -29,7 +29,7 @@ fi
 		return err
 	}
 
-	err = SingCmd(`
+	err = SingCmd(singName, `
 # write environment file
 
 cat > /ext3/env << 'EOFENV'
@@ -50,7 +50,7 @@ chmod +x /ext3/env
 		return err
 	}
 
-	err = SingCmd(`
+	err = SingCmd(singName, `
 # show conda/python info
 conda info --envs
 type -P python
@@ -69,8 +69,8 @@ python --version
 	if err != nil {
 		return err
 	}
-	err = SingCmd(`
-PYVER="` + pythonVersion + `"
+	err = SingCmd(singName, `
+PYVER="`+pythonVersion+`"
 
 # python version special cases
 
@@ -110,7 +110,7 @@ fi
 		return err
 	}
 
-	err = SingCmd(`
+	err = SingCmd(singName, `
 	echo Updating conda and pip...
 	conda update -n base conda -yq
 	conda install pip -yq

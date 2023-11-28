@@ -74,7 +74,7 @@ singularity exec $NV %s --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
 `
 
 const SINGRW_BLOCK = `
-SINGUCONDA_NO_INIT_ENV=1 QUIET_SING=1 ./singrw << 'EOFXXX'
+SINGUCONDA_NO_INIT_ENV=1 QUIET_SING=1 ./%srw << 'EOFXXX'
 [[ -e /ext3/env ]] && . /ext3/env > /dev/null
 %s
 EOFXXX
@@ -99,8 +99,8 @@ echo "ssh -L $port:localhost:$port greene"
 // 	return RunShell(fmt.Sprintf(SING_CMD_BLOCK, "", overlay, sif, cmd))
 // }
 
-func SingCmd(cmd string) error {
-	return RunShell(fmt.Sprintf(SINGRW_BLOCK, cmd))
+func SingCmd(singName string, cmd string) error {
+	return RunShell(fmt.Sprintf(SINGRW_BLOCK, singName, cmd))
 }
 
 func RunShell(cmd string) error {
@@ -114,7 +114,7 @@ func RunShell(cmd string) error {
 	return err
 }
 
-func StartSing() error { // overlay string, sif string
+func StartSing(singName string) error { // overlay string, sif string
 	for {
 		prompt := promptui.Select{
 			Label: "What do you want to do?",
@@ -129,7 +129,7 @@ func StartSing() error { // overlay string, sif string
 			return nil
 		}
 		if cmd == "enter (read-only)" {
-			err = RunShell("./sing")
+			err = RunShell("./" + singName)
 			if err != nil {
 				return err
 			}
@@ -147,7 +147,7 @@ func StartSing() error { // overlay string, sif string
 		// 	}
 		// }
 		if cmd == "enter (read-write)" {
-			err = RunShell("./singrw")
+			err = RunShell("./" + singName + "rw")
 			if err != nil {
 				return err
 			}
@@ -162,38 +162,26 @@ func StartSing() error { // overlay string, sif string
 
 }
 
-func WriteSingCmds(name string) error { //, overlay string, sif string
-	// overlay, _ = filepath.Abs(overlay)
-	// cwd, _ := filepath.Abs(".")
-	// if strings.HasPrefix(overlay, cwd) {
-	// 	overlay, _ = filepath.Rel(cwd, overlay)
-	// }
-	// relOverlay := "$SCRIPT_DIR/" + overlay
-
-	// cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "", overlay+":ro", sif)
-	// fmt.Printf("To enter the container, run: \033[32m./sing\033[0m \n\nor you can run:\n%s\n", cmd)
-	// script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", relOverlay+":ro", sif)
+func WriteSingCmds(singName string, name string) error { //, overlay string, sif string
 	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", ":ro")
-	err := os.WriteFile("sing", []byte(script), 0774)
+	err := os.WriteFile(singName, []byte(script), 0774)
 	if err != nil {
 		return err
 	}
 
-	// fmt.Printf("\nTo use GPUs do: \033[32m./sing --nv\033[0m\n")
 	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", "")
-	// fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./singrw\033[0m \n\n")
-	err = os.WriteFile("singrw", []byte(script), 0774)
+	err = os.WriteFile(singName+"rw", []byte(script), 0774)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func HowToRun(overlay string, sif string) {
+func HowToRun(singName string, overlay string, sif string) {
 	cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "", overlay+":ro", sif)
-	fmt.Printf("To enter the container, run: \033[32m./sing\033[0m \n\nor you can run:\n%s\n", cmd)
+	fmt.Printf("To enter the container, run: \033[32m./%s\033[0m \n\nor you can run:\n%s\n", singName, cmd)
 	fmt.Printf("\nTo use GPUs do: \033[32m./sing --nv\033[0m\n")
-	fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./singrw\033[0m \n\n")
+	fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./%srw\033[0m \n\n", singName)
 }
 
 func indexOf(element string, data []string) int {

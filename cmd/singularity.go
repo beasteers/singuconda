@@ -11,11 +11,15 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-func GetOverlay() (string, string, error) {
+const DEFAULT_SING_NAME = "sing"
+
+func GetOverlay() (string, string, string, error) {
+	singName := DEFAULT_SING_NAME
+
 	// look for existing overlays in this directory
 	existingMatches, err := filepath.Glob("*.ext3")
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 
 	// select from existing overlays
@@ -26,20 +30,20 @@ func GetOverlay() (string, string, error) {
 		}
 		_, existingOverlay, err := prompt1.Run()
 		if err != nil {
-			return "", "", err
+			return "", "", singName, err
 		}
 		if existingOverlay != "new..." {
 			overlayName := strings.TrimSuffix(path.Base(existingOverlay), ".gz")
 			overlayName = strings.TrimSuffix(path.Base(overlayName), filepath.Ext(overlayName))
 			// existingOverlay, _ = filepath.Abs(existingOverlay)
-			return existingOverlay, overlayName, nil
+			return existingOverlay, overlayName, singName, nil
 		}
 	}
 
 	// select new overlay
 	matches, err := filepath.Glob(filepath.Join(OVERLAY_DIR, "*.ext3.gz"))
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 
 	searcher := func(input string, index int) bool {
@@ -57,7 +61,7 @@ func GetOverlay() (string, string, error) {
 	}
 	_, overlayPath, err := prompt2.Run()
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 
 	// give the overlay a new name
@@ -70,7 +74,7 @@ func GetOverlay() (string, string, error) {
 	}
 	name, err := prompt3.Run()
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	if name == "" {
 		name = defaultOverlayName
@@ -80,32 +84,32 @@ func GetOverlay() (string, string, error) {
 	overlayDest := fmt.Sprintf("%s.ext3", name)
 	if _, err := os.Stat(overlayDest); !os.IsNotExist(err) {
 		fmt.Printf("file exists %s\n", overlayDest)
-		return "", "", err
+		return "", "", singName, err
 	}
 
 	// expand the overlay to the current directory
 	fmt.Printf("Unzipping %s to %s...\n", overlayPath, overlayDest)
 	f, err := os.Open(overlayPath)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	reader, err := gzip.NewReader(f)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	defer reader.Close()
 
 	o, err := os.Create(overlayDest)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	defer o.Close()
 	_, err = o.ReadFrom(reader)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	fmt.Printf("Done!\n")
-	return overlayDest, name, nil
+	return overlayDest, name, singName, nil
 }
 
 func GetSif(name string) (string, error) {
