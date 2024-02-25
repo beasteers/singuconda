@@ -29,7 +29,7 @@ The `~/singuconda` script itself:
  - [Tutorial](#Tutorial)
  - [Uninstall](#Uninstall)
  - [Example SBatch file](#Example-SBatch-file)
- - [sing in VSCode??](#sing-in-VSCode)
+ - [sing in VSCode??](#sing-in-vscode-not-working-yet---but-close)
 
 ## Install
 
