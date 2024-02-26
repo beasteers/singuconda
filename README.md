@@ -149,6 +149,28 @@ to a different directory (because afaik right now they'd both mount to `/ext3`).
 ./singrw -o my-too-small-overlay.ext3  # uh oh! collision? I should test this lol
 ```
 
+##### "FATAL ... In use by another process"
+
+This is just a common singularity error that happens because no other processes can be using the overlay while it's in write mode.
+```bash
+FATAL:   while loading overlay images: failed to open overlay image ./overlay.ext3: while locking ext3 partition from /scratch/bs3639/ego2023/InstructBLIP_PEFT/blip.ext3: can't open /scratch/bs3639/ego2023/InstructBLIP_PEFT/blip.ext3 for writing, currently in use by another process
+```
+
+So you have to find which one of your processes is still running (background screen, tmux, sbatch, ..) and either wait for them to finish, or kill the processes.
+```bash
+ps -fu $USER | grep tmux
+```
+
+One time, I spent an hour trying to hunt down the process and I swear I couldn't find it, so I just:
+```bash
+# move it out of the way
+mv overlay.ext3 overlay1.ext3
+# and made a copy
+cp overlay1.ext3 overlay.ext3
+
+# now the lock is on overlay1.ext3 :)
+```
+
 ## Uninstall
 
 and if you want to remove the files, just do:
