@@ -299,6 +299,7 @@ Host greene sing
     StrictHostKeyChecking no
     UserKnownHostsFile=/dev/null
 ```
+You can test this by setting HostName to log-1 and doing `ssh sing`. If all is successful, you should go straight into singularity (remember no running code on the login node).
 
 In VSCode, open settings (CMD-",") and enable "Remote.SSH: Enable Remote Command".
 
