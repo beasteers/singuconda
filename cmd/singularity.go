@@ -11,7 +11,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const DEFAULT_SING_NAME = "sing"
+var DEFAULT_SING_NAME = GetEnvVar("SING_CMD", "sing")
 
 func GetOverlay() (string, string, string, error) {
 	singName := DEFAULT_SING_NAME

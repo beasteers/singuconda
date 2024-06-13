@@ -8,11 +8,11 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const OVERLAY_DIR = "/scratch/work/public/overlay-fs-ext3"
-const SIF_DIR = "/scratch/work/public/singularity"
+var OVERLAY_DIR = GetEnvVar("SING_OVERLAY_DIR", "/scratch/work/public/overlay-fs-ext3")
+var SIF_DIR = GetEnvVar("SING_SIF_DIR", "/scratch/work/public/singularity")
 
-const DEFAULT_OVERLAY = "overlay-5GB-200K.ext3.gz"
-const DEFAULT_SIF = "cuda11.0-cudnn8-devel-ubuntu18.04.sif"
+var DEFAULT_OVERLAY = GetEnvVar("SING_DEFAULT_OVERLAY", "overlay-5GB-200K.ext3.gz")
+var DEFAULT_SIF = GetEnvVar("SING_DEFAULT_SIF", "cuda11.0-cudnn8-devel-ubuntu18.04.sif")
 
 const SING_CMD_BLOCK = `singularity exec %s --overlay %s %s /bin/bash << 'EOFXXX'
 [[ -e /ext3/env ]] && . /ext3/env > /dev/null
@@ -69,7 +69,7 @@ SIF="$(cat $SCRIPT_DIR/.$SING_NAME.sifpath)"
 
 # run singularity
 
-singularity exec $NV %s --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
+singularity exec $NV $@ --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
 
 `
 
@@ -94,10 +94,6 @@ echo "To access:"
 echo "ssh -L $port:localhost:$port $USER@greene.hpc.nyu.edu"
 echo "ssh -L $port:localhost:$port greene"
 `
-
-// func SingCmd(overlay string, sif string, cmd string) error {
-// 	return RunShell(fmt.Sprintf(SING_CMD_BLOCK, "", overlay, sif, cmd))
-// }
 
 func SingCmd(singName string, cmd string) error {
 	return RunShell(fmt.Sprintf(SINGRW_BLOCK, singName, cmd))
@@ -163,13 +159,13 @@ func StartSing(singName string) error { // overlay string, sif string
 }
 
 func WriteSingCmds(singName string, name string) error { //, overlay string, sif string
-	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", ":ro")
+	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, ":ro")
 	err := os.WriteFile(singName, []byte(script), 0774)
 	if err != nil {
 		return err
 	}
 
-	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", "")
+	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "")
 	err = os.WriteFile(singName+"rw", []byte(script), 0774)
 	if err != nil {
 		return err
@@ -180,7 +176,6 @@ func WriteSingCmds(singName string, name string) error { //, overlay string, sif
 func HowToRun(singName string, overlay string, sif string) {
 	cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "", overlay+":ro", sif)
 	fmt.Printf("To enter the container, run: \033[32m./%s\033[0m \n\nor you can run:\n%s\n", singName, cmd)
-	fmt.Printf("\nTo use GPUs do: \033[32m./sing --nv\033[0m\n")
 	fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./%srw\033[0m \n\n", singName)
 }
 
@@ -191,4 +186,12 @@ func indexOf(element string, data []string) int {
 		}
 	}
 	return 0
+}
+
+func GetEnvVar(key string, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
 }

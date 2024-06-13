@@ -70,7 +70,7 @@ This was built for NYU Greene's environment, but it should apply elsewhere too!`
 		// provide quick actions to get started
 		err = StartSing(singName) // overlay, sif
 		fmt.Printf("\nHappy training! :)\n")
-		fmt.Printf("\nQuick commands: \033[32m./sing\033[0m (read-only)    \033[32m./singrw\033[0m (read-write) \n")
+		fmt.Printf("\nQuick commands: \033[32m./%s\033[0m (read-only)    \033[32m./%srw\033[0m (read-write) \n", singName, singName)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -87,10 +87,25 @@ func Execute() {
 	}
 }
 
+// var (
+// 	sifDir     string
+// 	overlayDir string
+// 	name       string
+// 	overlayName string
+// 	sifName    string
+// )
+
 func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
+
+	// rootCmd.Flags().StringVar(&sifDir, "sifdir", GetEnvVar("SING_SIF_DIR", "/scratch/work/public/singularity"), "Directory where SIF files are located")
+	// rootCmd.Flags().StringVar(&overlayDir, "overlaydir", GetEnvVar("SING_OVERLAY_DIR", "/scratch/work/public/overlay-fs-ext3"), "Directory where overlay files are located")
+	// rootCmd.Flags().StringVar(&name, "name", "", "Name for the container")
+	// rootCmd.Flags().StringVar(&overlayName, "overlay", "", "Name of the overlay file")
+	// rootCmd.Flags().StringVar(&sifName, "sif", "", "Name of the SIF file")
+	// rootCmd.Flags().StringVar(&singName, "cmd", GetEnvVar("SING_CMD", "sing"), "Name of the SIF file")
 
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.singuconda.yaml)")
 
