@@ -116,6 +116,14 @@ export SING_DEFAULT_SIF="cuda11.0-cudnn8-devel-ubuntu18.04.sif"
 ~/singuconda
 ```
 
+## Uninstall
+
+to delete the sing environment, just do:
+
+```bash
+rm *.ext3 sing singrw .*.sifpath
+```
+
 ## FAQ
 
 ##### I want to have two overlays in the same directory! How does `./sing` know which one to point to?
@@ -186,14 +194,6 @@ mv overlay.ext3 overlay1.ext3
 cp overlay1.ext3 overlay.ext3
 
 # now the lock is on overlay1.ext3 :)
-```
-
-## Uninstall
-
-and if you want to remove the files, just do:
-
-```bash
-rm *.ext3 sing singrw .*.sifpath
 ```
 
 ## Explanation
