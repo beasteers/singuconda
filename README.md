@@ -95,6 +95,20 @@ singrw-*
 .*.sifpath
 ```
 
+#### Environment Variables
+```bash
+SING_CMD="sing"  # in case you prefer to scream: SING_CMD="aagh"
+
+# not everyone is at NYU
+SING_OVERLAY_DIR="/scratch/work/public/overlay-fs-ext3"
+SING_SIF_DIR="/scratch/work/public/singularity"
+
+# these are 
+SING_DEFAULT_OVERLAY="overlay-5GB-200K.ext3.gz"
+SING_DEFAULT_SIF="cuda11.0-cudnn8-devel-ubuntu18.04.sif"
+
+```
+
 ### FAQ
 
 ##### I want to have two overlays in the same directory! How does `./sing` know which one to point to?

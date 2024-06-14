@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 )
@@ -12,7 +13,7 @@ var OVERLAY_DIR = GetEnvVar("SING_OVERLAY_DIR", "/scratch/work/public/overlay-fs
 var SIF_DIR = GetEnvVar("SING_SIF_DIR", "/scratch/work/public/singularity")
 
 var DEFAULT_OVERLAY = GetEnvVar("SING_DEFAULT_OVERLAY", "overlay-5GB-200K.ext3.gz")
-var DEFAULT_SIF = GetEnvVar("SING_DEFAULT_SIF", "cuda11.0-cudnn8-devel-ubuntu18.04.sif")
+var DEFAULT_SIF = GetEnvVar("SING_DEFAULT_SIF", "cuda12.3.2-cudnn9.0.0-ubuntu-22.04.4.sif")
 
 const SING_CMD_BLOCK = `singularity exec %s --overlay %s %s /bin/bash << 'EOFXXX'
 [[ -e /ext3/env ]] && . /ext3/env > /dev/null
@@ -194,4 +195,27 @@ func GetEnvVar(key string, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+// SortList prioritizes items containing previous choices as substrings
+func SortSubstr(allItems, substrings []string) []string {
+	// Separate the items based on whether they contain previous choices as substrings
+	chosenItems := []string{}
+	otherItems := []string{}
+	for _, item := range allItems {
+		found := false
+		for _, choice := range substrings {
+			if strings.Contains(item, choice) {
+				chosenItems = append(chosenItems, item)
+				found = true
+				break
+			}
+		}
+		if !found {
+			otherItems = append(otherItems, item)
+		}
+	}
+
+	// Combine the lists with chosen items first
+	return append(chosenItems, otherItems...)
 }

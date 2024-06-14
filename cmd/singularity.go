@@ -41,10 +41,13 @@ func GetOverlay() (string, string, string, error) {
 	}
 
 	// select new overlay
+	defaultOverlay := filepath.Join(OVERLAY_DIR, DEFAULT_OVERLAY)
 	matches, err := filepath.Glob(filepath.Join(OVERLAY_DIR, "*.ext3.gz"))
 	if err != nil {
 		return "", "", singName, err
 	}
+	matches = SortSubstr(matches, []string{"-3GB", "-5GB", "-10GB", "-15GB"})
+	matches = SortSubstr(matches, []string{defaultOverlay})
 
 	searcher := func(input string, index int) bool {
 		name := strings.Replace(strings.ToLower(matches[index]), " ", "", -1)
@@ -58,7 +61,7 @@ func GetOverlay() (string, string, string, error) {
 		Items:             matches,
 		Searcher:          searcher,
 		StartInSearchMode: true,
-		CursorPos:         indexOf(filepath.Join(OVERLAY_DIR, DEFAULT_OVERLAY), matches),
+		CursorPos:         indexOf(defaultOverlay, matches),
 	}
 	_, overlayPath, err := prompt2.Run()
 	if err != nil {
@@ -141,6 +144,8 @@ func GetSif(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	matches = SortSubstr(matches, []string{"cuda"})
+	matches = SortSubstr(matches, []string{defaultSif})
 
 	searcher := func(input string, index int) bool {
 		name := strings.Replace(strings.ToLower(matches[index]), " ", "", -1)
