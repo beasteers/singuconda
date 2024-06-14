@@ -100,6 +100,8 @@ singrw
 ```
 
 #### Environment Variables
+
+##### Customize ~/singuconda
 You can customize behavior using environment variables. Set these in your `~/.bashrc`
 ```bash
 # in case you prefer to scream: SING_CMD="aagh"
@@ -114,6 +116,12 @@ export SING_DEFAULT_OVERLAY="overlay-5GB-200K.ext3.gz"
 export SING_DEFAULT_SIF="cuda11.0-cudnn8-devel-ubuntu18.04.sif"
 
 ~/singuconda
+```
+
+##### Customize ./sing
+```bash
+# if you have multiple overlays in the same directory
+SING_NAME=other ./sing
 ```
 
 ## Uninstall
