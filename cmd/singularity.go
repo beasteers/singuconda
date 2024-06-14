@@ -52,8 +52,9 @@ func GetOverlay() (string, string, string, error) {
 		return strings.Contains(name, input)
 	}
 
+	fmt.Printf("You probably want to use either 5GB or 10GB.\nAny smaller and you will probably run out of space.\nFor pytorch, 10GB is sensible.")
 	prompt2 := promptui.Select{
-		Label:             "Which overlay to use?",
+		Label:             "Which overlay to use? (e.g. type '-5gb')",
 		Items:             matches,
 		Searcher:          searcher,
 		StartInSearchMode: true,
@@ -147,7 +148,7 @@ func GetSif(name string) (string, error) {
 		return strings.Contains(name, input)
 	}
 	prompt := promptui.Select{
-		Label:             "Which sif to use?",
+		Label:             "Which sif to use? (e.g. type 'cuda12')",
 		Items:             matches,
 		Searcher:          searcher,
 		StartInSearchMode: true,
