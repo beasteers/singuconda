@@ -100,17 +100,20 @@ singrw
 ```
 
 #### Environment Variables
+You can customize behavior using environment variables. Set these in your `~/.bashrc`
 ```bash
-SING_CMD="sing"  # in case you prefer to scream: SING_CMD="aagh"
+# in case you prefer to scream: SING_CMD="aagh"
+export SING_CMD="sing"
 
 # not everyone is at NYU
-SING_OVERLAY_DIR="/scratch/work/public/overlay-fs-ext3"
-SING_SIF_DIR="/scratch/work/public/singularity"
+export SING_OVERLAY_DIR="/scratch/work/public/overlay-fs-ext3"
+export SING_SIF_DIR="/scratch/work/public/singularity"
 
-# these are 
-SING_DEFAULT_OVERLAY="overlay-5GB-200K.ext3.gz"
-SING_DEFAULT_SIF="cuda11.0-cudnn8-devel-ubuntu18.04.sif"
+# personal preferences
+export SING_DEFAULT_OVERLAY="overlay-5GB-200K.ext3.gz"
+export SING_DEFAULT_SIF="cuda11.0-cudnn8-devel-ubuntu18.04.sif"
 
+~/singuconda
 ```
 
 ## FAQ
