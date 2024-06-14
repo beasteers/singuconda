@@ -1,7 +1,7 @@
 # singuconda 🌈
 Tool for setting up singularity overlays with miniconda - [official NYU Greene docs](https://sites.google.com/nyu.edu/nyu-hpc/hpc-systems/greene/software/singularity-with-miniconda)
 
-...because nobody likes doing it
+...because nobody likes doing it (until now)
 
 ---
 ✨ Here's what you could look like ✨
@@ -23,7 +23,13 @@ The `~/singuconda` script itself:
  - has autocomplete for all of the overlays and sif files
  - automatically installs miniconda and lets you optionally pick a python version
 
+## TOC
 
+ - [Install](#Install)
+ - [Tutorial](#Tutorial)
+ - [Uninstall](#Uninstall)
+ - [Example SBatch file](#Example-SBatch-file)
+ - [sing in VSCode??](#sing-in-vscode-not-working-yet---but-close)
 
 ## Install
 
@@ -50,12 +56,8 @@ cd myproject
 The script will create some helper scripts for you:
  - `./sing` run the singularity container in read-only mode - use this to run many containers at once
  - `./singrw` run the singularity container in read-write mode - use this to install packages
- 
-By default it will auto-detect GPUs using nvidia-smi. But if that fails, you can do:
-  - `./sing --nv`
-  - `./singrw --nv`
 
-Those commands above will create interactive sessions. If you want to run a script/commands in singularity, you can do this:
+Those commands above will create interactive sessions. If you want to run a script/commands in singularity (e.g. in a sbatch file), you can do this:
 
 ```bash
 echo 'python  script.py' | ./sing
@@ -73,6 +75,13 @@ python script.py
 
 Any arguments you provide will be passed to the singularity command.
 
+```bash
+# e.g. mount squashfs files
+./sing -o path/to/dataset.sqf <<< "
+python train.py
+"
+```
+
 #### .gitignore
 
 If you do this while you're inside a git repository, you may want to ignore the generated files. 
@@ -85,11 +94,6 @@ Here's a list of rules to filter them.
 # singuconda: start scripts
 sing
 singrw
-
-# singuconda: named start scripts (for when you have multiple overlays in one directory)
-# These are no longer generated in the current version of the script
-sing-*
-singrw-*
 
 # the singularity container associated with the overlay
 .*.sifpath
@@ -109,7 +113,7 @@ SING_DEFAULT_SIF="cuda11.0-cudnn8-devel-ubuntu18.04.sif"
 
 ```
 
-### FAQ
+## FAQ
 
 ##### I want to have two overlays in the same directory! How does `./sing` know which one to point to?
 
@@ -157,6 +161,28 @@ to a different directory (because afaik right now they'd both mount to `/ext3`).
 
 ```
 ./singrw -o my-too-small-overlay.ext3  # uh oh! collision? I should test this lol
+```
+
+##### "FATAL ... In use by another process"
+
+This is just a common singularity error that happens because no other processes can be using the overlay while it's in write mode.
+```bash
+FATAL:   while loading overlay images: failed to open overlay image ./overlay.ext3: while locking ext3 partition from /scratch/bs3639/ego2023/InstructBLIP_PEFT/blip.ext3: can't open /scratch/bs3639/ego2023/InstructBLIP_PEFT/blip.ext3 for writing, currently in use by another process
+```
+
+So you have to find which one of your processes is still running (background screen, tmux, sbatch, ..) and either wait for them to finish, or kill the processes.
+```bash
+ps -fu $USER | grep tmux
+```
+
+One time, I spent an hour trying to hunt down the process and I swear I couldn't find it, so I just:
+```bash
+# move it out of the way
+mv overlay.ext3 overlay1.ext3
+# and made a copy
+cp overlay1.ext3 overlay.ext3
+
+# now the lock is on overlay1.ext3 :)
 ```
 
 ## Uninstall
@@ -258,3 +284,78 @@ alias wnv='watch -n 0.1 nvidia-smi'
 # lets me know when my bashrc is sourced
 [[ $- == *i* ]] && echo 'hi bea :)'
 ```
+
+
+## sing in VSCode?? NOT WORKING YET - BUT CLOSE!
+
+[Official Greene VSCode docs](https://sites.google.com/nyu.edu/nyu-hpc/training-support/general-hpc-topics/vs-code)
+
+If you manage to get this fully working, please post how you did it here! https://github.com/beasteers/singuconda/issues/7
+
+### First time setup
+Setup your ssh config on your local computer like this: `vim ~/.ssh/config`
+```bash
+Host sing
+    User YOUR-NETID              # CHANGE
+    HostName cs022               # YOU WILL HAVE TO CHANGE ME EVERY TIME YOU SUBMIT A JOB
+    RemoteCommand /path/to/sing  # CHANGE
+    RequestTTY yes               # needed for sing to work
+    ProxyCommand  ssh greene nc %h %p 2> /dev/null
+
+Host greene
+    HostName greene.hpc.nyu.edu
+    User YOUR-NETID
+    ServerAliveInterval 120
+    ForwardAgent yes  # for git push over ssh
+
+# greene changes their signature for some reason?? So you have to do this to avoid errors
+Host greene sing
+    StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
+```
+You can test this by setting HostName to log-1 and doing `ssh sing`. If all is successful, you should go straight into singularity (remember no running code on the login node).
+
+In VSCode, open settings (CMD-",") and enable "Remote.SSH: Enable Remote Command".
+
+### Every other time
+
+##### Step 1: Request a compute job
+```bash
+# I don't need nothin fancy
+srun -c 1 -t 8:0:0 --mem 8GB "sleep infinity"
+
+# OR
+
+# gimme gpu pls
+srun -c 12 -t 6:0:0 --mem 64GB --gres gpu:1 "sleep infinity"
+```
+
+Get the node's name e.g. cs022
+```bash
+# lets see what node I got
+$ squeue --me
+
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+          43351615        cs     bash   bs3639  R    1:11:40      1 cs022
+```
+
+##### Step 2: Update your SSH config
+on your local computer: `vim ~/.ssh/config`
+```
+Host sing
+    HostName cs022               # UPDATE
+```
+
+#### Step 3: Connect to Host
+ - CMD-Shift-P to open the command palette.
+ - Type "Connect to Host"
+ - Select host "sing"
+
+Or if you're already in a remote window (job died, you submitted another), just run "Reload Window" instead.
+
+#### The problem:
+you can do `ssh sing` and end up in a singularity container just fine.
+
+But vscode uses `ssh -T` and just timeouts when connecting.
+
+
