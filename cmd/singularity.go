@@ -11,11 +11,15 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-func GetOverlay() (string, string, error) {
+var DEFAULT_SING_NAME = GetEnvVar("SING_CMD", "sing")
+
+func GetOverlay() (string, string, string, error) {
+	singName := DEFAULT_SING_NAME
+
 	// look for existing overlays in this directory
 	existingMatches, err := filepath.Glob("*.ext3")
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 
 	// select from existing overlays
@@ -26,21 +30,24 @@ func GetOverlay() (string, string, error) {
 		}
 		_, existingOverlay, err := prompt1.Run()
 		if err != nil {
-			return "", "", err
+			return "", "", singName, err
 		}
 		if existingOverlay != "new..." {
 			overlayName := strings.TrimSuffix(path.Base(existingOverlay), ".gz")
 			overlayName = strings.TrimSuffix(path.Base(overlayName), filepath.Ext(overlayName))
 			// existingOverlay, _ = filepath.Abs(existingOverlay)
-			return existingOverlay, overlayName, nil
+			return existingOverlay, overlayName, singName, nil
 		}
 	}
 
 	// select new overlay
+	defaultOverlay := filepath.Join(OVERLAY_DIR, DEFAULT_OVERLAY)
 	matches, err := filepath.Glob(filepath.Join(OVERLAY_DIR, "*.ext3.gz"))
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
+	matches = SortSubstr(matches, []string{"-3GB", "-5GB", "-10GB", "-15GB"})
+	matches = SortSubstr(matches, []string{defaultOverlay})
 
 	searcher := func(input string, index int) bool {
 		name := strings.Replace(strings.ToLower(matches[index]), " ", "", -1)
@@ -48,16 +55,17 @@ func GetOverlay() (string, string, error) {
 		return strings.Contains(name, input)
 	}
 
+	fmt.Printf("You probably want to use either 5GB or 10GB.\nAny smaller and you will probably run out of space.\nFor pytorch, 10GB is sensible.")
 	prompt2 := promptui.Select{
-		Label:             "Which overlay to use?",
+		Label:             "Which overlay to use? (e.g. type '-5gb')",
 		Items:             matches,
 		Searcher:          searcher,
 		StartInSearchMode: true,
-		CursorPos:         indexOf(filepath.Join(OVERLAY_DIR, DEFAULT_OVERLAY), matches),
+		CursorPos:         indexOf(defaultOverlay, matches),
 	}
 	_, overlayPath, err := prompt2.Run()
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 
 	// give the overlay a new name
@@ -70,7 +78,7 @@ func GetOverlay() (string, string, error) {
 	}
 	name, err := prompt3.Run()
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	if name == "" {
 		name = defaultOverlayName
@@ -80,32 +88,32 @@ func GetOverlay() (string, string, error) {
 	overlayDest := fmt.Sprintf("%s.ext3", name)
 	if _, err := os.Stat(overlayDest); !os.IsNotExist(err) {
 		fmt.Printf("file exists %s\n", overlayDest)
-		return "", "", err
+		return "", "", singName, err
 	}
 
 	// expand the overlay to the current directory
 	fmt.Printf("Unzipping %s to %s...\n", overlayPath, overlayDest)
 	f, err := os.Open(overlayPath)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	reader, err := gzip.NewReader(f)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	defer reader.Close()
 
 	o, err := os.Create(overlayDest)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	defer o.Close()
 	_, err = o.ReadFrom(reader)
 	if err != nil {
-		return "", "", err
+		return "", "", singName, err
 	}
 	fmt.Printf("Done!\n")
-	return overlayDest, name, nil
+	return overlayDest, name, singName, nil
 }
 
 func GetSif(name string) (string, error) {
@@ -136,6 +144,8 @@ func GetSif(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	matches = SortSubstr(matches, []string{"cuda"})
+	matches = SortSubstr(matches, []string{defaultSif})
 
 	searcher := func(input string, index int) bool {
 		name := strings.Replace(strings.ToLower(matches[index]), " ", "", -1)
@@ -143,7 +153,7 @@ func GetSif(name string) (string, error) {
 		return strings.Contains(name, input)
 	}
 	prompt := promptui.Select{
-		Label:             "Which sif to use?",
+		Label:             "Which sif to use? (e.g. type 'cuda12')",
 		Items:             matches,
 		Searcher:          searcher,
 		StartInSearchMode: true,

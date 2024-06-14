@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 )
 
-const OVERLAY_DIR = "/scratch/work/public/overlay-fs-ext3"
-const SIF_DIR = "/scratch/work/public/singularity"
+var OVERLAY_DIR = GetEnvVar("SING_OVERLAY_DIR", "/scratch/work/public/overlay-fs-ext3")
+var SIF_DIR = GetEnvVar("SING_SIF_DIR", "/scratch/work/public/singularity")
 
-const DEFAULT_OVERLAY = "overlay-5GB-200K.ext3.gz"
-const DEFAULT_SIF = "cuda11.0-cudnn8-devel-ubuntu18.04.sif"
+var DEFAULT_OVERLAY = GetEnvVar("SING_DEFAULT_OVERLAY", "overlay-5GB-200K.ext3.gz")
+var DEFAULT_SIF = GetEnvVar("SING_DEFAULT_SIF", "cuda12.3.2-cudnn9.0.0-ubuntu-22.04.4.sif")
 
 const SING_CMD_BLOCK = `singularity exec %s --overlay %s %s /bin/bash << 'EOFXXX'
 [[ -e /ext3/env ]] && . /ext3/env > /dev/null
@@ -69,12 +70,12 @@ SIF="$(cat $SCRIPT_DIR/.$SING_NAME.sifpath)"
 
 # run singularity
 
-singularity exec $NV %s --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
+singularity exec $NV $@ --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
 
 `
 
 const SINGRW_BLOCK = `
-SINGUCONDA_NO_INIT_ENV=1 QUIET_SING=1 ./singrw << 'EOFXXX'
+SINGUCONDA_NO_INIT_ENV=1 QUIET_SING=1 ./%srw << 'EOFXXX'
 [[ -e /ext3/env ]] && . /ext3/env > /dev/null
 %s
 EOFXXX
@@ -95,12 +96,8 @@ echo "ssh -L $port:localhost:$port $USER@greene.hpc.nyu.edu"
 echo "ssh -L $port:localhost:$port greene"
 `
 
-// func SingCmd(overlay string, sif string, cmd string) error {
-// 	return RunShell(fmt.Sprintf(SING_CMD_BLOCK, "", overlay, sif, cmd))
-// }
-
-func SingCmd(cmd string) error {
-	return RunShell(fmt.Sprintf(SINGRW_BLOCK, cmd))
+func SingCmd(singName string, cmd string) error {
+	return RunShell(fmt.Sprintf(SINGRW_BLOCK, singName, cmd))
 }
 
 func RunShell(cmd string) error {
@@ -114,7 +111,7 @@ func RunShell(cmd string) error {
 	return err
 }
 
-func StartSing() error { // overlay string, sif string
+func StartSing(singName string) error { // overlay string, sif string
 	for {
 		prompt := promptui.Select{
 			Label: "What do you want to do?",
@@ -129,7 +126,7 @@ func StartSing() error { // overlay string, sif string
 			return nil
 		}
 		if cmd == "enter (read-only)" {
-			err = RunShell("./sing")
+			err = RunShell("./" + singName)
 			if err != nil {
 				return err
 			}
@@ -147,7 +144,7 @@ func StartSing() error { // overlay string, sif string
 		// 	}
 		// }
 		if cmd == "enter (read-write)" {
-			err = RunShell("./singrw")
+			err = RunShell("./" + singName + "rw")
 			if err != nil {
 				return err
 			}
@@ -162,38 +159,25 @@ func StartSing() error { // overlay string, sif string
 
 }
 
-func WriteSingCmds(name string) error { //, overlay string, sif string
-	// overlay, _ = filepath.Abs(overlay)
-	// cwd, _ := filepath.Abs(".")
-	// if strings.HasPrefix(overlay, cwd) {
-	// 	overlay, _ = filepath.Rel(cwd, overlay)
-	// }
-	// relOverlay := "$SCRIPT_DIR/" + overlay
-
-	// cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "", overlay+":ro", sif)
-	// fmt.Printf("To enter the container, run: \033[32m./sing\033[0m \n\nor you can run:\n%s\n", cmd)
-	// script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", relOverlay+":ro", sif)
-	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", ":ro")
-	err := os.WriteFile("sing", []byte(script), 0774)
+func WriteSingCmds(singName string, name string) error { //, overlay string, sif string
+	script := fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, ":ro")
+	err := os.WriteFile(singName, []byte(script), 0774)
 	if err != nil {
 		return err
 	}
 
-	// fmt.Printf("\nTo use GPUs do: \033[32m./sing --nv\033[0m\n")
-	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "$@", "")
-	// fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./singrw\033[0m \n\n")
-	err = os.WriteFile("singrw", []byte(script), 0774)
+	script = fmt.Sprintf(SING_CMD_FLEX_SCRIPT, name, "")
+	err = os.WriteFile(singName+"rw", []byte(script), 0774)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func HowToRun(overlay string, sif string) {
+func HowToRun(singName string, overlay string, sif string) {
 	cmd := fmt.Sprintf(SING_CMD_INTERACTIVE, "", overlay+":ro", sif)
-	fmt.Printf("To enter the container, run: \033[32m./sing\033[0m \n\nor you can run:\n%s\n", cmd)
-	fmt.Printf("\nTo use GPUs do: \033[32m./sing --nv\033[0m\n")
-	fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./singrw\033[0m \n\n")
+	fmt.Printf("To enter the container, run: \033[32m./%s\033[0m \n\nor you can run:\n%s\n", singName, cmd)
+	fmt.Printf("The above command opens with read-only. To open with write permissions: \033[32m./%srw\033[0m \n\n", singName)
 }
 
 func indexOf(element string, data []string) int {
@@ -203,4 +187,35 @@ func indexOf(element string, data []string) int {
 		}
 	}
 	return 0
+}
+
+func GetEnvVar(key string, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
+}
+
+// SortList prioritizes items containing previous choices as substrings
+func SortSubstr(allItems, substrings []string) []string {
+	// Separate the items based on whether they contain previous choices as substrings
+	chosenItems := []string{}
+	otherItems := []string{}
+	for _, item := range allItems {
+		found := false
+		for _, choice := range substrings {
+			if strings.Contains(item, choice) {
+				chosenItems = append(chosenItems, item)
+				found = true
+				break
+			}
+		}
+		if !found {
+			otherItems = append(otherItems, item)
+		}
+	}
+
+	// Combine the lists with chosen items first
+	return append(chosenItems, otherItems...)
 }
