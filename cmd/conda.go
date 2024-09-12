@@ -15,7 +15,7 @@ if [ ! -e "$CONDADIR" ] && [ ! -z $CONDADIR ]; then
 	echo installing miniconda inside container...
 	echo URL: $CONDAURL
 	echo Script Location: $CONDASH
-	[[ ! -f "$CONDASH" ]] && wget "$CONDAURL"
+	[[ ! -f "$CONDASH" ]] && wget --no-check-certificate "$CONDAURL"
 	bash "$CONDASH" -b -p "$CONDADIR"
 	rm "$CONDASH"
 	"$CONDADIR"/condabin/conda update -n base conda -yq || echo "Couldn't update conda"
