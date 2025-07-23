@@ -16,7 +16,7 @@ Running singuconda will give you a magic little `./sing` 🧚🏾‍♀️ comma
  - It automatically sources your `env` file for you (the one from the tutorial)
  - also creates a `singrw` script that mounts the overlay in read-write mode (`./sing` mounts with read-only so you can have multiple scripts using it)
  - Has full support for both interactive shells (`./sing`) and scripts (`./sing <<< "type -P python"`) which will run the command and exit. This is what's used in sbatch files!
- - It accepts additional arguments so you can do `./sing -o /scratch/work/public/ml-datasets/coco/coco-2017.sqf:ro` to mount additional overlays (for example)
+ - It accepts additional [arguments](https://docs.sylabs.io/guides/3.1/user-guide/cli/singularity_exec.html) so you can do `./sing -o /scratch/work/public/ml-datasets/coco/coco-2017.sqf:ro` to mount additional overlays (for example)
 
 
 The `~/singuconda` script itself:
