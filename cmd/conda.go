@@ -18,6 +18,7 @@ if [ ! -e "$CONDADIR" ] && [ ! -z $CONDADIR ]; then
 	[[ ! -f "$CONDASH" ]] && wget --no-check-certificate "$CONDAURL"
 	bash "$CONDASH" -b -p "$CONDADIR"
 	rm "$CONDASH"
+	"$CONDADIR"/condabin/conda tos accept --override-channels --channel CHANNEL
 	"$CONDADIR"/condabin/conda update -n base conda -yq || echo "Couldn't update conda"
 	"$CONDADIR"/condabin/conda clean -yqa || echo "Couldn't clean conda"
 	echo "================================="
