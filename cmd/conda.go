@@ -18,6 +18,7 @@ if [ ! -e "$CONDADIR" ] && [ ! -z $CONDADIR ]; then
 	[[ ! -f "$CONDASH" ]] && wget --no-check-certificate "$CONDAURL"
 	bash "$CONDASH" -b -p "$CONDADIR"
 	rm "$CONDASH"
+	"$CONDADIR"/condabin/conda tos accept
 	"$CONDADIR"/condabin/conda update -n base conda -yq || echo "Couldn't update conda"
 	"$CONDADIR"/condabin/conda clean -yqa || echo "Couldn't clean conda"
 	echo "================================="
@@ -36,6 +37,7 @@ fi
 
 cat > /ext3/env << 'EOFENV'
 #!/bin/bash
+export CONDA_PLUGINS_AUTO_ACCEPT_TOS="true"
 export PATH=/ext3/miniconda3/bin:$PATH
 source /ext3/miniconda3/etc/profile.d/conda.sh -y
 [[ -f /ext3/conda.activate ]] && source /ext3/conda.activate
