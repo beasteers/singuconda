@@ -9,19 +9,19 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-var OVERLAY_DIR = GetEnvVar("SING_OVERLAY_DIR", "/scratch/work/public/overlay-fs-ext3")
-var SIF_DIR = GetEnvVar("SING_SIF_DIR", "/scratch/work/public/singularity")
+var OVERLAY_DIR = GetEnvVar("SING_OVERLAY_DIR", "/share/apps/overlay-fs-ext3")
+var SIF_DIR = GetEnvVar("SING_SIF_DIR", "/share/apps/images/")
 
 var DEFAULT_OVERLAY = GetEnvVar("SING_DEFAULT_OVERLAY", "overlay-5GB-200K.ext3.gz")
 var DEFAULT_SIF = GetEnvVar("SING_DEFAULT_SIF", "cuda12.3.2-cudnn9.0.0-ubuntu-22.04.4.sif")
 
-const SING_CMD_BLOCK = `singularity exec %s --overlay %s %s /bin/bash << 'EOFXXX'
+const SING_CMD_BLOCK = `singularity exec --fakeroot %s --overlay %s %s /bin/bash << 'EOFXXX'
 [[ -e /ext3/env ]] && . /ext3/env > /dev/null
 %s
 EOFXXX`
 
 const SING_CMD_INTERACTIVE = `
-singularity exec %s \
+singularity exec --fakeroot %s \
 	--overlay %s \
 	%s \
 	/bin/bash --init-file /ext3/env
@@ -70,7 +70,7 @@ SIF="$(cat $SCRIPT_DIR/.$SING_NAME.sifpath)"
 
 # run singularity
 
-singularity exec $NV $@ --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
+singularity exec --fakeroot $NV $@ --overlay "${OVERLAY}%s" "$SIF" /bin/bash "${ARGS[@]}"
 
 `
 
